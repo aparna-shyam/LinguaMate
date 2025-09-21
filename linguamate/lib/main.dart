@@ -11,8 +11,7 @@ class LinguamateApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Linguamate',
-      debugShowCheckedModeBanner:
-          false, // Add this line to remove the debug banner
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -20,6 +19,8 @@ class LinguamateApp extends StatelessWidget {
             'Roboto', // Using a common font, you can change this in pubspec.yaml
       ),
       home: const WelcomePage(),
+      // Define a route for the chat page
+      routes: {'/chat': (context) => const ChatPage()},
     );
   }
 }
@@ -144,10 +145,7 @@ class _WelcomePageState extends State<WelcomePage> {
                     onPressed: _selectedLanguage == null
                         ? null // The button is disabled if no language is selected
                         : () {
-                            // This is where you would handle the navigation to the next page
-                            // For now, we'll just print the selected language.
-                            debugPrint('Selected Language: $_selectedLanguage');
-                            // Example of a snackbar to confirm selection
+                            // Display the snackbar
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
@@ -156,6 +154,8 @@ class _WelcomePageState extends State<WelcomePage> {
                                 duration: const Duration(seconds: 2),
                               ),
                             );
+                            // Navigate to the chat page after the snackbar
+                            Navigator.pushNamed(context, '/chat');
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color.fromARGB(255, 0, 0, 0),
@@ -178,6 +178,177 @@ class _WelcomePageState extends State<WelcomePage> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class ChatMessage {
+  final String text;
+  final bool isUser;
+
+  ChatMessage({required this.text, required this.isUser});
+}
+
+class ChatPage extends StatefulWidget {
+  const ChatPage({super.key});
+
+  @override
+  State<ChatPage> createState() => _ChatPageState();
+}
+
+class _ChatPageState extends State<ChatPage> {
+  // Simple chat messages as a list of ChatMessage objects
+  final List<ChatMessage> _messages = [
+    ChatMessage(text: "Hello! What do you want to learn today?", isUser: false),
+  ];
+  final TextEditingController _textController = TextEditingController();
+
+  void _handleSubmitted(String text) {
+    _textController.clear();
+    setState(() {
+      _messages.add(
+        ChatMessage(text: text, isUser: true),
+      ); // Add the user's message
+    });
+    // This is where you would call your chatbot API to get a response
+    // For now, let's add a placeholder system response
+    Future.delayed(const Duration(seconds: 1), () {
+      setState(() {
+        _messages.add(
+          ChatMessage(
+            text:
+                "That's a great question! I'm still learning, but I'll do my best to help.",
+            isUser: false,
+          ),
+        );
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor:
+          Colors.transparent, // Set to transparent to show the background
+      appBar: AppBar(
+        title: const Text(
+          'LinguaMate Chatbot',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.transparent, // Transparent AppBar
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/wallpaper.jpg'), // New background image
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(Colors.black54, BlendMode.darken),
+          ),
+        ),
+        child: Column(
+          children: <Widget>[
+            // Chat message list
+            Flexible(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(8.0),
+                reverse: true,
+                itemCount: _messages.length,
+                itemBuilder: (_, int index) {
+                  final ChatMessage message =
+                      _messages[_messages.length - 1 - index];
+                  return Container(
+                    alignment: message.isUser
+                        ? Alignment.centerRight
+                        : Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8.0,
+                      horizontal: 16.0,
+                    ),
+                    child: Container(
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width * 0.7,
+                      ),
+                      padding: const EdgeInsets.all(12.0),
+                      decoration: BoxDecoration(
+                        color: message.isUser
+                            ? Colors.amber.withOpacity(
+                                0.8,
+                              ) // User bubble color changed to amber
+                            : Colors.black.withOpacity(
+                                0.6,
+                              ), // System bubble color changed to black
+                        borderRadius: BorderRadius.only(
+                          topLeft: const Radius.circular(12),
+                          topRight: const Radius.circular(12),
+                          bottomLeft: message.isUser
+                              ? const Radius.circular(12)
+                              : const Radius.circular(0),
+                          bottomRight: message.isUser
+                              ? const Radius.circular(0)
+                              : const Radius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        message.text,
+                        style: TextStyle(
+                          color: message.isUser ? Colors.black : Colors.white,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const Divider(height: 1.0),
+            // Input bar
+            Container(
+              decoration: const BoxDecoration(color: Colors.transparent),
+              child: IconTheme(
+                data: IconThemeData(
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 8.0,
+                    vertical: 8.0,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.blueGrey[800],
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  child: Row(
+                    children: <Widget>[
+                      Flexible(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: TextField(
+                            controller: _textController,
+                            onSubmitted: _handleSubmitted,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: const InputDecoration.collapsed(
+                              hintText: 'Type a message...',
+                              hintStyle: TextStyle(color: Colors.white54),
+                            ),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.send,
+                          color: Colors.amber,
+                        ), // Send button color changed to amber
+                        onPressed: () => _handleSubmitted(_textController.text),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
