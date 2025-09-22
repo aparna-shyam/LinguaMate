@@ -1,11 +1,9 @@
-// api_service.dart
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
   // Replace this with your actual API key
-  static const _apiKey = 'AIzaSyBqXgno-TlNUXF_KYSV2HjMIwCUUwiyXWg';
+  static const _apiKey = 'AIzaSyDPaGWKprjT8Vh-x0EbB0Qe4la_pSpKr5g';
   static const _apiUrl =
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=$_apiKey';
 
@@ -18,6 +16,7 @@ class ApiService {
         {
           "parts": [
             {
+              // The API prompt now uses the 'language' parameter.
               "text":
                   "Correct the following $language sentence, explain the grammar mistakes, and provide a corrected version. The output should be a single JSON object with the following structure: {'corrected_sentence': '...', 'mistakes': ['...'], 'corrected_text_for_tts': '...'} and make sure the corrected_text_for_tts has no punctuation.: $text",
             },
