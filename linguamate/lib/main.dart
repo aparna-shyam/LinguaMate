@@ -1,4 +1,8 @@
+// main.dart
+
 import 'package:flutter/material.dart';
+import 'package:text_to_speech/text_to_speech.dart';
+import 'api_service.dart';
 
 void main() {
   runApp(const LinguamateApp());
@@ -19,8 +23,6 @@ class LinguamateApp extends StatelessWidget {
             'Roboto', // Using a common font, you can change this in pubspec.yaml
       ),
       home: const WelcomePage(),
-      // Define a route for the chat page
-      routes: {'/chat': (context) => const ChatPage()},
     );
   }
 }
@@ -154,8 +156,14 @@ class _WelcomePageState extends State<WelcomePage> {
                                 duration: const Duration(seconds: 2),
                               ),
                             );
-                            // Navigate to the chat page after the snackbar
-                            Navigator.pushNamed(context, '/chat');
+                            // Navigate to the chat page and pass the selected language
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ChatPage(language: _selectedLanguage!),
+                              ),
+                            );
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color.fromARGB(255, 0, 0, 0),
@@ -192,7 +200,9 @@ class ChatMessage {
 }
 
 class ChatPage extends StatefulWidget {
-  const ChatPage({super.key});
+  final String language; // New field to hold the language
+
+  const ChatPage({super.key, required this.language}); // Updated constructor
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -204,27 +214,55 @@ class _ChatPageState extends State<ChatPage> {
     ChatMessage(text: "Hello! What do you want to learn today?", isUser: false),
   ];
   final TextEditingController _textController = TextEditingController();
+  final ApiService _apiService = ApiService();
+  final TextToSpeech tts = TextToSpeech();
+  bool _isLoading = false;
 
-  void _handleSubmitted(String text) {
+  void _handleSubmitted(String text) async {
     _textController.clear();
     setState(() {
       _messages.add(
         ChatMessage(text: text, isUser: true),
       ); // Add the user's message
+      _isLoading = true;
     });
-    // This is where you would call your chatbot API to get a response
-    // For now, let's add a placeholder system response
-    Future.delayed(const Duration(seconds: 1), () {
+
+    try {
+      // Pass the language from the widget to the API service
+      final response = await _apiService.checkGrammar(text, widget.language);
+
+      if (response.containsKey('error')) {
+        setState(() {
+          _messages.add(
+            ChatMessage(text: "API Error: ${response['error']}", isUser: false),
+          );
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final correctedSentence = response['corrected_sentence'];
+      final mistakes = (response['mistakes'] as List).cast<String>();
+      final correctedTextForTts = response['corrected_text_for_tts'];
+
+      setState(() {
+        _messages.add(ChatMessage(text: correctedSentence, isUser: false));
+        _messages.add(
+          ChatMessage(text: "Mistakes: ${mistakes.join(', ')}", isUser: false),
+        );
+        _isLoading = false;
+      });
+
+      // Speak the corrected sentence
+      tts.speak(correctedTextForTts);
+    } catch (e) {
       setState(() {
         _messages.add(
-          ChatMessage(
-            text:
-                "That's a great question! I'm still learning, but I'll do my best to help.",
-            isUser: false,
-          ),
+          ChatMessage(text: "An error occurred: $e", isUser: false),
         );
+        _isLoading = false;
       });
-    });
+    }
   }
 
   @override
@@ -303,6 +341,12 @@ class _ChatPageState extends State<ChatPage> {
                 },
               ),
             ),
+            // Loading indicator
+            if (_isLoading)
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(color: Colors.amber),
+              ),
             const Divider(height: 1.0),
             // Input bar
             Container(
