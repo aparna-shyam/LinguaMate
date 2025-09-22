@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiService {
-  // Replace this with your actual API key
-  static const _apiKey = 'AIzaSyDPaGWKprjT8Vh-x0EbB0Qe4la_pSpKr5g';
-  static const _apiUrl =
+  // Access the API key from the environment variable
+  static final _apiKey = dotenv.env['API_KEY'];
+  static final _apiUrl =
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=$_apiKey';
 
   Future<Map<String, dynamic>> checkGrammar(

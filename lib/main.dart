@@ -1,8 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'api_service.dart';
 
-void main() => runApp(const LinguamateApp());
+Future main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await dotenv.load(fileName: ".env");
+    debugPrint("✅ .env file loaded successfully!");
+    runApp(const LinguamateApp());
+  } catch (e) {
+    debugPrint("❌ Failed to load .env file: $e");
+    // Show an error screen if the .env file is missing.
+    runApp(
+      const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Text(
+              "Error: Failed to load environment variables.\nPlease ensure your .env file is in the project root.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class LinguamateApp extends StatelessWidget {
   const LinguamateApp({super.key});
@@ -262,7 +286,7 @@ class ChatPageState extends State<ChatPage> {
           'LinguaMate Chatbot',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: Colors.blueGrey[900],
+        backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
       ),
@@ -362,7 +386,7 @@ class ChatPageState extends State<ChatPage> {
                     vertical: 8.0,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.blueGrey[800],
+                    color: Colors.black.withOpacity(0.6),
                     borderRadius: BorderRadius.circular(20.0),
                   ),
                   child: Row(
